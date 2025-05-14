@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = secrets.token_urlsafe(32)
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
-    DOMAIN: str = "shopee-project.onrender.com"
+    DOMAIN: str = "https://be-shopee-project.onrender.com"
     ENVIRONMENT: Literal["local", "staging", "production"] = "production"
 
     @computed_field  # type: ignore[misc]
@@ -44,7 +44,7 @@ class Settings(BaseSettings):
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
-    ] = ['http://localhost:3000','https://be-shopee-project.onrender.com']
+    ] = ['http://localhost:3000','shopee-projecttt.surge.sh']
 
     PROJECT_NAME: str = 'e-commerce'
     SENTRY_DSN: HttpUrl | None = None

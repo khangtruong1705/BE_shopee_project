@@ -44,7 +44,7 @@ class Settings(BaseSettings):
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
-    ] = ['http://localhost:3000','shopee-projecttt.surge.sh']
+    ] = ['http://localhost:3000','https://shopee-project-test.surge.sh']
 
     PROJECT_NAME: str = 'e-commerce'
     SENTRY_DSN: HttpUrl | None = None

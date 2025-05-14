@@ -44,7 +44,7 @@ class Settings(BaseSettings):
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
-    ] = ['http://localhost:3000','https://shopee-projecttt.onrender.com']
+    ] = ['http://localhost:3000','https://be-shopee-project.onrender.com']
 
     PROJECT_NAME: str = 'e-commerce'
     SENTRY_DSN: HttpUrl | None = None

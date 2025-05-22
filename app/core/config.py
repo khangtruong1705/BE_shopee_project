@@ -1,5 +1,5 @@
 import secrets
-import warnings
+
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -7,8 +7,7 @@ from pydantic import (
     BeforeValidator,
     HttpUrl,
     PostgresDsn,
-    computed_field,
-    model_validator,
+    computed_field
 )
 from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -32,7 +31,7 @@ class Settings(BaseSettings):
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     DOMAIN: str = "https://be-shopee-project.onrender.com"
-    ENVIRONMENT: Literal["local", "staging", "production"] = "production"
+    ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
     @computed_field  # type: ignore[misc]
     @property
@@ -53,6 +52,17 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "admin"
     POSTGRES_PASSWORD: str = "gbmT2OAM5Ete2v0SHBh8Jt68NWd65q1Z"
     POSTGRES_DB: str = "shopee_project"
+
+    # PROJECT_NAME: str = 'e-commerce'
+    # SENTRY_DSN: HttpUrl | None = None
+    # POSTGRES_SERVER: str = "localhost"
+    # POSTGRES_PORT: int = 5432  # Cổng mặc định của PostgreSQL, không thay đổi
+    # POSTGRES_USER: str = "postgres"
+    # POSTGRES_PASSWORD: str = "postgres"
+    # POSTGRES_DB: str = "shopeeDB"
+
+
+
 
     @computed_field  # type: ignore[misc]
     @property

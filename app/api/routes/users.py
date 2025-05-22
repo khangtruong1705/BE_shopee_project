@@ -83,7 +83,7 @@ def register_user(register_data: RegisterData):
         session.add(new_user)
         session.commit()
 
-        return {"message": "User registered successfully !!!"}
+        return {"detail": "User registered successfully !!!"}
 
 
 @router.post("/login")
@@ -156,7 +156,7 @@ def change_password(change_data: ChangePasswordData, session: Session = Depends(
         # Gửi email thông báo
         # send_email(user.email, user.name)
 
-        return {"message": "Password changed successfully and notification email sent"}
+        return {"detail": "Password changed successfully !!!"}
 
     except Exception as e:
         session.rollback()  # Rollback nếu có lỗi

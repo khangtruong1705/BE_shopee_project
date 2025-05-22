@@ -48,7 +48,6 @@ def get_all_products(
 
 @router.get("/get-products-by-search/{keyword}")
 def get_products_by_search(keyword,session: Session = Depends(get_session)) -> Any:
-    normalized_keyword = unidecode(keyword)
     message_content = {
         "search_keyword": keyword,
         "timestamp": current_date
@@ -57,7 +56,7 @@ def get_products_by_search(keyword,session: Session = Depends(get_session)) -> A
     # producer.produce('search_topic', value=serialized_value)
     # producer.flush() 
     print("Message sent to Kafka:", serialized_value)
-    statement_product = select(Products).where(Products.detailed_description.ilike(f"%{keyword}%"))
+    statement_product = select(Products).where(Products.description.ilike(f"%{keyword}%"))
     
     products = session.exec(statement_product).all()
     

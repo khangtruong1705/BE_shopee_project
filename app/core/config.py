@@ -3,7 +3,6 @@ import secrets
 from typing import Annotated, Any, Literal
 
 from pydantic import (
-    AnyUrl,
     BeforeValidator,
     HttpUrl,
     PostgresDsn,
@@ -42,13 +41,13 @@ class Settings(BaseSettings):
         return f"https://{self.DOMAIN}"
 
     BACKEND_CORS_ORIGINS: Annotated[
-        list[AnyUrl] | str, BeforeValidator(parse_cors)
-    ] = ['http://localhost:3000','shopee-project-taupe.vercel.app']
+        list[str] | str, BeforeValidator(parse_cors)
+    ] = ["*"]
 
     PROJECT_NAME: str = 'e-commerce'
     SENTRY_DSN: HttpUrl | None = None
     POSTGRES_SERVER: str = "dpg-d0i4meumcj7s739ms2e0-a.singapore-postgres.render.com"
-    POSTGRES_PORT: int = 5432  # Cổng mặc định của PostgreSQL, không thay đổi
+    POSTGRES_PORT: int = 5432  
     POSTGRES_USER: str = "admin"
     POSTGRES_PASSWORD: str = "gbmT2OAM5Ete2v0SHBh8Jt68NWd65q1Z"
     POSTGRES_DB: str = "shopee_project"
@@ -56,7 +55,7 @@ class Settings(BaseSettings):
     # PROJECT_NAME: str = 'e-commerce'
     # SENTRY_DSN: HttpUrl | None = None
     # POSTGRES_SERVER: str = "localhost"
-    # POSTGRES_PORT: int = 5432  # Cổng mặc định của PostgreSQL, không thay đổi
+    # POSTGRES_PORT: int = 5432  
     # POSTGRES_USER: str = "postgres"
     # POSTGRES_PASSWORD: str = "postgres"
     # POSTGRES_DB: str = "shopeeDB"

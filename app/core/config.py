@@ -1,8 +1,9 @@
 import secrets
 
 from typing import Annotated, Any, Literal
-
+from pydantic import AnyUrl
 from pydantic import (
+    AnyUrl,
     BeforeValidator,
     HttpUrl,
     PostgresDsn,
@@ -10,7 +11,7 @@ from pydantic import (
 )
 from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing_extensions import Self
+
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -41,8 +42,8 @@ class Settings(BaseSettings):
         return f"https://{self.DOMAIN}"
 
     BACKEND_CORS_ORIGINS: Annotated[
-        list[str] | str, BeforeValidator(parse_cors)
-    ] = ["*"]
+        list[AnyUrl] | str, BeforeValidator(parse_cors)
+    ] = ['http://localhost:3000','https://fe-shopee-project.vercel.app']
 
     PROJECT_NAME: str = 'e-commerce'
     SENTRY_DSN: HttpUrl | None = None

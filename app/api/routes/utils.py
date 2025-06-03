@@ -2,27 +2,27 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import jwt
 from datetime import datetime, timedelta
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import smtplib
+from fastapi import HTTPException
+import os
 
+
+# HASH PASSWORD
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-
-
-# Hàm để xác minh mật khẩu
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
-
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 
+# JSON WEB TOKEN
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")  
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
-SECRET_KEY = "B3O6N9"
-ALGORITHM = "HS256"  # Thuật toán mã hóa
-ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Thời gian tồn tại của token
-
-# Hàm tạo access token
 def create_access_token(data):
     to_encode = data.copy()
     to_encode.pop("password", None)
@@ -30,6 +30,54 @@ def create_access_token(data):
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire})
+
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def decode_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload  # Hợp lệ
+    except jwt.ExpiredSignatureError:
+        print("Token đã hết hạn")
+        return None
+    except jwt.InvalidTokenError:
+        print("Token không hợp lệ")
+        return None
+
+
+# EMAIL
+def send_email(sender_email,sender_password,to_email:str,subject,body):
+    # Setting email
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body,'html'))
+
+    try:
+        # Connect to Gmail SMTP server
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()  # Bật TLS
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, to_email, msg.as_string())
+        server.quit()
+        print(f"Email sent successfully to {to_email}")
+    except Exception as e:
+        print(f"Failed to send email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
+    
+def create_reset_password_token(email: str) -> str:
+    if not isinstance(email, str):
+        raise ValueError("Email must be a string")
+
+    expire = datetime.utcnow() + timedelta(minutes=2)
+
+    to_encode = {
+        "sub": email,      
+        "exp": expire,     
+        "type": "reset"   
+    }
 
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt

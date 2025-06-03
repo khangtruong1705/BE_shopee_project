@@ -1,106 +1,62 @@
-
 from typing import Any
-from app.api.routes.utils import verify_password,hash_password,create_access_token
-from fastapi import APIRouter, Depends, HTTPException,status
+from app.api.routes.utils import verify_password,hash_password,create_access_token,send_email,create_reset_password_token,decode_token
+from fastapi import APIRouter, Depends, HTTPException,status,UploadFile, File,Form,Depends
 from sqlmodel import Session, select
-from app.models import Users, LoginData,RegisterData,ChangePasswordData,PayLoad
-from app.core.db import engine,get_session
+from app.models import Users, LoginData,RegisterData,ChangePasswordData,PayLoad,ForgotPasswordRequest,ResetPasswordRequest,Token,SMSRequest
+import cloudinary
+import cloudinary.uploader
+from dotenv import load_dotenv
+from app.core.db import get_session,engine
+import os
+import time
 from datetime import datetime
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import random
+import requests
+import base64
+
+
+
 
 router = APIRouter()
 
 
+load_dotenv()
 
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+)
 
-
-def send_email(to_email: str, user_name: str):
-    # Thông tin Gmail (thay bằng thông tin của bạn)
-    sender_email = "your_email@gmail.com"  # Thay bằng email của bạn
-    sender_password = "your_app_password"  # Thay bằng App Password của Gmail
-
-    # Tạo nội dung email
-    subject = "Password Changed Successfully"
-    body = f"""
-    Dear {user_name},
-
-    Your password has been successfully changed on {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC.
-    If you did not initiate this change, please contact our support team immediately.
-
-    Best regards,
-    Your Application Team
-    """
-
-    # Thiết lập email
-    msg = MIMEMultipart()
-    msg['From'] = sender_email
-    msg['To'] = to_email
-    msg['Subject'] = subject
-    msg.attach(MIMEText(body, 'plain'))
-
-    try:
-        # Kết nối đến Gmail SMTP server
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()  # Bật TLS
-        server.login(sender_email, sender_password)
-        server.sendmail(sender_email, to_email, msg.as_string())
-        server.quit()
-        print(f"Email sent successfully to {to_email}")
-    except Exception as e:
-        print(f"Failed to send email: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
-
-
-
-
-
-def is_email_taken(session: Session, email: str) -> bool:
-    statement = select(Users).where(Users.email == email)
-    return session.exec(statement).first() is not None
-
+sender_email = os.getenv("SENDER_EMAIL")
+sender_password = os.getenv("SENDER_PASSWORD")
 
 @router.post("/register")
 def register_user(register_data: RegisterData):
-    with Session(engine) as session:
-        # Kiểm tra xem email đã tồn tại chưa
-        if is_email_taken(session, register_data.email):
+      with Session(engine) as session:
+        statement = select(Users).where(Users.email == register_data.email)
+        existing_user = session.exec(statement).first()
+        if existing_user is not None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered !!!")
-
-        # Băm mật khẩu
         hashed_password = hash_password(register_data.password)
-
-        # Tạo đối tượng User mới
         new_user = Users(
             name=register_data.name,
             email=register_data.email,
             password=hashed_password,
-            role="customer"  # Mặc định là customer
+            role="customer"
         )
-
-        # Thêm vào cơ sở dữ liệu
         session.add(new_user)
         session.commit()
-
         return {"detail": "User registered successfully !!!"}
 
-
 @router.post("/login")
-def login_user(login_data: LoginData):
-    with Session(engine) as session:
-
-
-        # Kiểm tra xem người dùng với email đã tồn tại chưa
-        user = session.query(Users).filter(Users.email == login_data.email).first()
+def login_user(login_data: LoginData,session: Session = Depends(get_session)):
+        statement = select(Users).where(Users.email == login_data.email)
+        user = session.exec(statement).first()
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Email not found !!!")
-
-        # # Xác minh mật khẩu
         if not verify_password(login_data.password, user.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password !!!")
-
-        # # Tạo token truy cập (access token)
         token_data = {
           'user_id': user.user_id,
           'name':user.name,
@@ -110,75 +66,181 @@ def login_user(login_data: LoginData):
           'role':user.role
         }
         access_token = create_access_token(token_data)
-
         return access_token
-
-
-
 
 @router.get("/get-user-by-user-id/{user_id}")
 def get_user_by_id(user_id: int, session: Session = Depends(get_session)) -> Any:
-    """
-    API lấy thông tin user bằng user_id.
-    """
-    # Truy vấn để lấy user theo user_id
     statement = select(Users).where(Users.user_id == user_id)
     user = session.exec(statement).first()
-    
-    # Nếu không tìm thấy user, trả về lỗi
     if user is None:
         raise HTTPException(status_code=404, detail=f"User with id {user_id} not found.")
-    user_data = user.model_dump()  # Nếu sử dụng SQLModel, dict() sẽ có sẵn
-    user_data.pop("password", None)  # Loại bỏ trường password nếu tồn tại
+    user_data = user.model_dump()  
+    user_data.pop("password", None)  
     return user_data
 
 @router.post("/change-password")
 def change_password(change_data: ChangePasswordData, session: Session = Depends(get_session)):
     try:
-        # Kiểm tra xem người dùng với email đã tồn tại chưa
         statement = select(Users).where(Users.user_id == change_data.user_id)
         user =session.exec(statement).first()
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Email not found")
-        # # Xác minh mật khẩu cũ
         if not verify_password(change_data.old_password,user.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect old password")
         if (change_data.new_password != change_data.confirm_new_password):
             raise HTTPException(status_code=400, detail=" Confirm-new-password Incorrect !")
-        
-        # Băm mật khẩu mới
         hashed_new_password = hash_password(change_data.new_password)
-
-        # Cập nhật mật khẩu mới trong cơ sở dữ liệu
         user.password = hashed_new_password
         session.commit()
+        # Send email Notification
+        try:
+            subject = "Password Changed Successfully"
+            html_body = f"""
+            <html>
+            <body>
+                <p>Dear You,</p>
 
-        # Gửi email thông báo
-        # send_email(user.email, user.name)
+                <p>
+                Your password has been successfully changed on
+                <strong>{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC</strong>.
+                If you did not initiate this change, please contact our support team immediately.
+                </p>
 
-        return {"detail": "Password changed successfully !!!"}
-
+                <p>
+                Best regards,<br>
+                <em>Your Application Team</em>
+                </p>
+            </body>
+            </html>
+            """
+            send_email(sender_email,sender_password,user.email,subject,html_body)
+        except Exception as email_error:
+              print(email_error)
+        return {"detail": "Password changed successfully."}
+    except HTTPException:
+        raise
     except Exception as e:
-        session.rollback()  # Rollback nếu có lỗi
+        session.rollback()
         raise HTTPException(status_code=500, detail=f"Error changing password: {str(e)}")
 
 @router.put("/update-info-user-by-userid")
 def update_info_user(payload:PayLoad,session: Session = Depends(get_session)
 ):
-    # Lấy order item theo ID
     statement = select(Users).where(Users.user_id == payload.user_id)
     user =session.exec(statement).first()
-    # Nếu không tồn tại thì trả về lỗi
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    # # Cập nhật cột status 
     user.name = payload.data.name
     user.phone_number = payload.data.phone_number
     user.gender = payload.data.gender
     user.birthday = payload.data.birthday
-   
-    session.commit()  # Lưu thay đổi vào cơ sở dữ liệu
-      # Tải lại dữ liệu của order_item
-
+    session.commit()  
     return {"message":"InfoUser changed successfully !!!"}   
+
+
+@router.post("/upload-avatar-by-userid")
+async def upload_avatar(user_id: int = Form(...), avatar: UploadFile = File(...),session: Session = Depends(get_session)):
+    statement = select(Users).where(Users.user_id == user_id)
+    user =session.exec(statement).first()
+    contents = await avatar.read()
+    unix_timestamp = int(time.time())
+    if not user.avatar_url:
+        # Upload file to Cloudinary
+            result = cloudinary.uploader.upload(
+            contents,
+            folder="avatars",
+            public_id=f"{user_id}_{unix_timestamp}",  
+            resource_type="image"
+    )          
+    if user.avatar_url :
+        filename = user.avatar_url.rpartition('/')[2].split('.')[0]
+        public_id = f"avatars/{filename}" 
+        cloudinary.uploader.destroy(public_id, resource_type="image")
+        result =  cloudinary.uploader.upload(
+            contents,
+            folder="avatars",
+            public_id=f"{user_id}_{unix_timestamp}", 
+            resource_type="image")
+    user.avatar_url = result["secure_url"]
+    session.commit()
+    session.refresh(user)
+    return {
+        "avatar_url": result["secure_url"]
+    }
+
+@router.post("/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest,session: Session = Depends(get_session)):
+    statement = select(Users).where(Users.email == data.email)
+    user = session.exec(statement).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Email not found")
+    token = create_reset_password_token(user.email)
+    subject = "Password Reset Request"
+    html_body = f"""
+    <html>
+        <body>
+            <p>Your token to reset your password: <strong>{token}</strong></p>
+        </body>
+    </html>
+    """
+    try:
+        send_email(sender_email,sender_password,user.email,subject,html_body)
+    except Exception as email_error:
+        print(email_error)
+    user.reset_password_token = token
+    session.commit()
+    session.refresh(user)
+    return user.email
+
+@router.post("/check-reset-password-token")
+async def check_reset_password_token(data:Token,session: Session = Depends(get_session)):
+    statement = select(Users).where(Users.reset_password_token == data.token)
+    user = session.exec(statement).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+    
+    return user.reset_password_token
+
+@router.post("/reset-password")
+async def reset_password(request: ResetPasswordRequest,session: Session = Depends(get_session)):
+    token = request.token
+    decode_token(token)
+    new_password = hash_password(request.new_password)
+    statement = select(Users).where(Users.reset_password_token ==token) 
+    user = session.exec(statement).first()
+    user.password = new_password
+    user.reset_password_token = None  
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return {"message": "Password reset successfully"}
+
+access_token_speedsms=os.getenv("ACCESS_TOKEN_SPEEDSMS")
+@router.post("/send-sms-otp")
+def send_sms_otp(request: SMSRequest):
+    otp = random.randint(100000, 999999)
+    message = f"Mã OTP của bạn là: {otp}"
+
+    url =   "https://api.speedsms.vn/index.php/sms/send"
+           
+
+    payload = {
+        "to": request.phone_number,
+        "content": message,
+        "type": 2,  # 2 = OTP
+    }
+
+    headers = {
+        "Access-Token": access_token_speedsms,
+        "Content-Type": "application/json"
+    }
+
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        print("SpeedSMS response:", response.status_code, response.text)
+        return {"status": "OK", "otp": otp, "api_response": response.json()}
+    except Exception as e:
+        return {"status": "ERROR", "detail": str(e)}
+
+
+

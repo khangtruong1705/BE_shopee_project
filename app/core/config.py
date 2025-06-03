@@ -1,5 +1,4 @@
 import secrets
-
 from typing import Annotated, Any, Literal
 from pydantic import AnyUrl
 from pydantic import (
@@ -33,7 +32,7 @@ class Settings(BaseSettings):
     DOMAIN: str = "https://be-shopee-project.onrender.com"
     ENVIRONMENT: Literal["local", "staging", "production"] = "production"
 
-    @computed_field  # type: ignore[misc]
+    @computed_field 
     @property
     def server_host(self) -> str:
         # Use HTTPS for anything other than local development
@@ -43,7 +42,7 @@ class Settings(BaseSettings):
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
-    ] = ['http://localhost:3000','https://fe-shopee-project.vercel.app']
+    ] = ['http://localhost:3000','https://fe-shopee-project-hrej.vercel.app']
 
     PROJECT_NAME: str = 'e-commerce'
     SENTRY_DSN: HttpUrl | None = None
@@ -64,7 +63,7 @@ class Settings(BaseSettings):
 
 
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         return MultiHostUrl.build(
@@ -78,4 +77,4 @@ class Settings(BaseSettings):
 
 
 
-settings = Settings()  # type: ignore
+settings = Settings() 

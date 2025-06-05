@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+import os
 import secrets
 from typing import Annotated, Any, Literal
 from pydantic import AnyUrl
@@ -8,8 +10,13 @@ from pydantic import (
     PostgresDsn,
     computed_field
 )
+
 from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+load_dotenv()
+
+
 
 
 
@@ -43,6 +50,17 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
     ] = ['http://localhost:3000','https://fe-shopee-project-hrej.vercel.app']
+
+
+    # PROJECT_NAME = os.getenv("PROJECT_NAME")
+    # SENTRY_DSN: HttpUrl | None = None
+    # POSTGRES_SERVER = os.getenv("POSTGRES_SERVER")
+    # POSTGRES_PORT = os.getenv("POSTGRES_PORT")
+    # POSTGRES_USER = os.getenv("POSTGRES_USER")
+    # POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+    # POSTGRES_DB = os.getenv("POSTGRES_DB")
+
+
 
     PROJECT_NAME: str = 'e-commerce'
     SENTRY_DSN: HttpUrl | None = None

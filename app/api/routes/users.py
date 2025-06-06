@@ -11,7 +11,8 @@ import os
 import time
 from datetime import datetime
 import random
-import requests
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 
 
@@ -21,15 +22,16 @@ router = APIRouter()
 
 
 load_dotenv()
-
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),
     api_secret=os.getenv("CLOUDINARY_API_SECRET"),
 )
-
 sender_email = os.getenv("SENDER_EMAIL")
 sender_password = os.getenv("SENDER_PASSWORD")
+
+
 
 @router.post("/register")
 def register_user(register_data: RegisterData):
@@ -67,6 +69,54 @@ def login_user(login_data: LoginData,session: Session = Depends(get_session)):
         }
         access_token = create_access_token(token_data)
         return access_token
+
+@router.post("/auth/google")
+async def google_login(token_request: Token,session: Session = Depends(get_session)):
+    try:
+        idinfo = id_token.verify_oauth2_token(
+            token_request.token,
+            requests.Request(),
+            GOOGLE_CLIENT_ID
+        ) 
+        statement = select(Users).where(Users.email == idinfo.get("email"))
+        user = session.exec(statement).first()
+        if not user:
+            user = Users(
+                name=idinfo.get("name"),
+                email=idinfo.get("email"),
+                password="",
+                address=None,
+                phone_number=None,
+                role="user"
+            )
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            print("New user created:", user)  
+        token_data = {
+            'user_id': user.user_id,
+            'name':user.name,
+            'email':user.email,
+            'address':user.address,
+            'phone_number':user.phone_number,
+            'role':user.role}
+        access_token = create_access_token(token_data)
+        return access_token
+
+    except ValueError as e:
+        # Token không hợp lệ
+        print("ValueError:", e)
+        raise HTTPException(status_code=400, detail="Invalid token")
+    except Exception as e:
+        # Lỗi khác
+        print(f"Error verifying token: {e}")
+        raise HTTPException(status_code=500, detail="Error verifying token")
+
+
+
+
+
+
 
 @router.get("/get-user-by-user-id/{user_id}")
 def get_user_by_id(user_id: int, session: Session = Depends(get_session)) -> Any:

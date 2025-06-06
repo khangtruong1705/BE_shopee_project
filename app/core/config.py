@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     def server_host(self) -> str:
         # Use HTTPS for anything other than local development
         if self.ENVIRONMENT == "local":
-            return f"http://{self.DOMAIN}"
+            return f"http://localhost:8000"
         return f"https://{self.DOMAIN}"
 
     BACKEND_CORS_ORIGINS: Annotated[

@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 import secrets
+from typing import ClassVar
 from typing import Annotated, Any, Literal
 from pydantic import AnyUrl
 from pydantic import (
@@ -53,13 +54,13 @@ class Settings(BaseSettings):
     ]
     
 
-    PROJECT_NAME = os.getenv("PROJECT_NAME")
+    PROJECT_NAME:ClassVar[str] = os.getenv("PROJECT_NAME")
     SENTRY_DSN: HttpUrl | None = None
-    POSTGRES_SERVER = os.getenv("POSTGRES_SERVER")
-    POSTGRES_PORT = os.getenv("POSTGRES_PORT")
-    POSTGRES_USER = os.getenv("POSTGRES_USER")
-    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-    POSTGRES_DB = os.getenv("POSTGRES_DB")
+    POSTGRES_SERVER:ClassVar[str] = os.getenv("POSTGRES_SERVER")
+    POSTGRES_PORT:ClassVar[int] = int(os.getenv("POSTGRES_PORT"))
+    POSTGRES_USER:ClassVar[str] = os.getenv("POSTGRES_USER")
+    POSTGRES_PASSWORD:ClassVar[str] = os.getenv("POSTGRES_PASSWORD")
+    POSTGRES_DB:ClassVar[str]= os.getenv("POSTGRES_DB")
 
     # PROJECT_NAME: str = 'e-commerce'
     # SENTRY_DSN: HttpUrl | None = None

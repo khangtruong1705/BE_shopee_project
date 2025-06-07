@@ -46,7 +46,7 @@ class Users(SQLModel, table=True):
 class Comments(SQLModel, table=True):
     __tablename__ = 'comments'
 
-    comment_id: int = Field(default=None, primary_key=True)
+    comment_id: Optional[int] = Field(default=None, primary_key=True)
     comment_content: str = Field(...)
     user_id: Optional[int] = Field(default=None, foreign_key="users.user_id")
     product_id: Optional[int] = Field(default=None, foreign_key="products.product_id")

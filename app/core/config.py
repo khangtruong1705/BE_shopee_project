@@ -47,28 +47,19 @@ class Settings(BaseSettings):
             return f"http://localhost:8000"
         return f"https://{self.DOMAIN}"
 
-    BACKEND_CORS_ORIGINS: Annotated[
-        list[AnyUrl] | str, BeforeValidator(parse_cors)
-    ] = ['http://localhost:3000','https://fe-shopee-project-hrej.vercel.app']
+    BACKEND_CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "https://fe-shopee-project.onrender.com"
+    ]
+    
 
-
-    # PROJECT_NAME = os.getenv("PROJECT_NAME")
-    # SENTRY_DSN: HttpUrl | None = None
-    # POSTGRES_SERVER = os.getenv("POSTGRES_SERVER")
-    # POSTGRES_PORT = os.getenv("POSTGRES_PORT")
-    # POSTGRES_USER = os.getenv("POSTGRES_USER")
-    # POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-    # POSTGRES_DB = os.getenv("POSTGRES_DB")
-
-
-
-    PROJECT_NAME: str = 'e-commerce'
+    PROJECT_NAME = os.getenv("PROJECT_NAME")
     SENTRY_DSN: HttpUrl | None = None
-    POSTGRES_SERVER: str = "dpg-d0i4meumcj7s739ms2e0-a.singapore-postgres.render.com"
-    POSTGRES_PORT: int = 5432  
-    POSTGRES_USER: str = "admin"
-    POSTGRES_PASSWORD: str = "gbmT2OAM5Ete2v0SHBh8Jt68NWd65q1Z"
-    POSTGRES_DB: str = "shopee_project"
+    POSTGRES_SERVER = os.getenv("POSTGRES_SERVER")
+    POSTGRES_PORT = os.getenv("POSTGRES_PORT")
+    POSTGRES_USER = os.getenv("POSTGRES_USER")
+    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+    POSTGRES_DB = os.getenv("POSTGRES_DB")
 
     # PROJECT_NAME: str = 'e-commerce'
     # SENTRY_DSN: HttpUrl | None = None
@@ -77,10 +68,6 @@ class Settings(BaseSettings):
     # POSTGRES_USER: str = "postgres"
     # POSTGRES_PASSWORD: str = "postgres"
     # POSTGRES_DB: str = "shopeeDB"
-
-
-
-
     @computed_field  
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:

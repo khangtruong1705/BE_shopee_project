@@ -112,12 +112,6 @@ async def google_login(token_request: Token,session: Session = Depends(get_sessi
         print(f"Error verifying token: {e}")
         raise HTTPException(status_code=500, detail="Error verifying token")
 
-
-
-
-
-
-
 @router.get("/get-user-by-user-id/{user_id}")
 def get_user_by_id(user_id: int, session: Session = Depends(get_session)) -> Any:
     statement = select(Users).where(Users.user_id == user_id)

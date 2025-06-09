@@ -2,11 +2,8 @@ from dotenv import load_dotenv
 import os
 import secrets
 from typing import ClassVar
-from typing import Annotated, Any, Literal
-from pydantic import AnyUrl
+from typing import Any, Literal
 from pydantic import (
-    AnyUrl,
-    BeforeValidator,
     HttpUrl,
     PostgresDsn,
     computed_field
@@ -16,10 +13,6 @@ from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
-
-
-
-
 
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):

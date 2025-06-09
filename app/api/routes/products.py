@@ -8,11 +8,8 @@ from dotenv import load_dotenv
 import json
 # from confluent_kafka import Producer
 
-
-
 load_dotenv()
 current_date = datetime.now().strftime('%Y-%m-%d')
-
 
 
 # KAFKA_SERVER = 'localhost:9092'

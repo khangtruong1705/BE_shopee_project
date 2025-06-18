@@ -1,5 +1,5 @@
 from typing import Any
-from app.api.routes.utils import verify_password,hash_password,create_access_token,send_email,create_reset_password_token,decode_token
+from app.api.routes.utils import verify_password,hash_password,create_access_token,send_email,create_reset_password_token,decode_token,get_superset_access_token
 from fastapi import APIRouter, Depends, HTTPException,status,UploadFile, File,Form,Depends
 from sqlmodel import Session, select
 from app.models import Users, LoginData,RegisterData,ChangePasswordData,PayLoad,ForgotPasswordRequest,ResetPasswordRequest,Token,SMSRequest
@@ -9,17 +9,16 @@ from dotenv import load_dotenv
 from app.core.db import get_session,engine
 import os
 import time
-from datetime import datetime
 import random
 from google.oauth2 import id_token
-from google.auth.transport import requests
-
-
-
+from google.auth.transport import requests  as requests_google
+from datetime import datetime, timezone
+import requests
 
 
 router = APIRouter()
 
+now_utc = datetime.now(timezone.utc)
 
 load_dotenv()
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
@@ -75,7 +74,7 @@ async def google_login(token_request: Token,session: Session = Depends(get_sessi
     try:
         idinfo = id_token.verify_oauth2_token(
             token_request.token,
-            requests.Request(),
+            requests_google.Request(),
             GOOGLE_CLIENT_ID
         ) 
         statement = select(Users).where(Users.email == idinfo.get("email"))
@@ -102,15 +101,58 @@ async def google_login(token_request: Token,session: Session = Depends(get_sessi
             'role':user.role}
         access_token = create_access_token(token_data)
         return access_token
-
     except ValueError as e:
-        # Token không hợp lệ
         print("ValueError:", e)
         raise HTTPException(status_code=400, detail="Invalid token")
     except Exception as e:
-        # Lỗi khác
         print(f"Error verifying token: {e}")
         raise HTTPException(status_code=500, detail="Error verifying token")
+
+
+@router.get("/get-superset-guest-token")
+def get_guest_token():
+    try:
+        access_token = get_superset_access_token()
+        print('access_token',access_token)
+        url = "http://localhost:8088/api/v1/security/guest_token/"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+
+        data = {
+            "user": {
+                "username": "guest",
+                "first_name": "Guest",
+                "last_name": "User"
+            },
+            "resources": [
+                {
+                    "type": "dashboard",
+                    "id": "96575e71-11e4-43aa-b330-13c4ae995510"
+                }
+            ],
+            "rls": []  # Sửa từ rls_rules thành rls
+            # "roles": ["Public"]  # Thêm roles, dùng Public thay vì Admin cho bảo mật
+        }
+
+        response = requests.post(url, headers=headers, json=data)
+        response.raise_for_status()  # Ném lỗi nếu status code không phải 2xx
+        response_json = response.json()
+        print(f"Guest token response: {response_json}")  # Log toàn bộ response
+        token = response_json.get("token")
+        if not token or not isinstance(token, str):
+            print(f"Invalid token: {response_json}")
+            raise HTTPException(status_code=500, detail=f"Invalid token received: {response_json}")
+        return token
+    except  requests.RequestException as e:
+            print(f"Failed to get guest token: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to get guest token: {str(e)}")
+    except Exception as e:
+            print(f"Unexpected error: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+   
+
 
 @router.get("/get-user-by-user-id/{user_id}")
 def get_user_by_id(user_id: int, session: Session = Depends(get_session)) -> Any:

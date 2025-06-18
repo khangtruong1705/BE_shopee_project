@@ -11,5 +11,5 @@ def get_session():
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 
-print('settings.SQLALCHEMY_DATABASE_URI',settings.SQLALCHEMY_DATABASE_URI)
 
+print('database',settings.SQLALCHEMY_DATABASE_URI)

@@ -1,13 +1,13 @@
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
 from fastapi import HTTPException
 import os
-
+import requests
 
 # HASH PASSWORD
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -71,7 +71,7 @@ def create_reset_password_token(email: str) -> str:
     if not isinstance(email, str):
         raise ValueError("Email must be a string")
 
-    expire = datetime.utcnow() + timedelta(minutes=2)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=2)
 
     to_encode = {
         "sub": email,      
@@ -81,3 +81,14 @@ def create_reset_password_token(email: str) -> str:
 
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+def get_superset_access_token():
+    url = "http://localhost:8088/api/v1/security/login"
+    payload = {
+        "username": "supersetadmin",   
+        "password": "supersetadmin", 
+        "provider": "db"
+    }
+    response = requests.post(url, json=payload)
+    access_token = response.json()["access_token"]
+    return access_token

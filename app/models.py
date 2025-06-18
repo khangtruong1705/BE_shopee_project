@@ -22,8 +22,8 @@ class Products(SQLModel,table=True):
     detailed_description: Optional[str] = None 
     category_id: Optional[int] = Field(default=None, foreign_key="categories.category_id", nullable=True)
     shop_name_id: Optional[int] = Field(default=None, foreign_key="shop_name.shop_name_id", nullable=True)
-    created_at: Optional[datetime] = Field(default_factory=datetime.now)
-    updated_at: Optional[datetime] = Field(default_factory=datetime.now)
+    created_at: Optional[date] = Field(default_factory=date.today)
+    updated_at: Optional[date] = Field(default_factory=None)
     views:int
 
 class Users(SQLModel, table=True):
@@ -36,10 +36,10 @@ class Users(SQLModel, table=True):
     address: str = None
     phone_number: str = None
     role: str = Field(default="customer")
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: date = Field(default_factory=date.today)
+    updated_at: date = Field(default_factory=date.today)
     gender:str
-    birthday: datetime
+    birthday: date
     avatar_url : str
     reset_password_token:str
 
@@ -58,8 +58,8 @@ class Categories(SQLModel, table=True):
     category_id: Optional[int] = Field(default=None, primary_key=True, index=True)
     name: str
     description: Optional[str] = None
-    created_at: Optional[datetime] = Field(default_factory=datetime.now)
-    updated_at: Optional[datetime] = Field(default=None)
+    created_at: Optional[date] = Field(default_factory=date.today)
+    updated_at: Optional[date] = Field(default=None)
 
 class Carts(SQLModel, table=True):
     __tablename__ = "carts"
@@ -76,10 +76,13 @@ class ShopName(SQLModel, table=True):
 
     shop_name_id: Optional[int] = Field(default=None, primary_key=True, index=True)
     name: Optional[str] = Field(default=None, nullable=True)
-    rating: Optional[Decimal] = Field(default=None, nullable=True)  # Chỉ định kiểu ở đây
-    created_at: Optional[datetime] = Field(default_factory=datetime.now, nullable=True)
+    rating: Optional[Decimal] = Field(default=None, nullable=True)
+    created_at: Optional[date] = Field(default_factory=date.today, nullable=True)
     category_id: Optional[int] = Field(default=None, foreign_key="categories.category_id", nullable=True)
-    image:str
+    image:Optional[str]
+    response_rate:int
+    email_owner: Optional[str] = Field(default=None, foreign_key="users.email", nullable=True)
+    phone_owner:str
 
 class Payments(SQLModel, table=True):
     __tablename__ = "payments"
@@ -115,7 +118,10 @@ class UserFollowShop(SQLModel, table=True):
 
     user_id: int = Field(foreign_key="users.user_id", primary_key=True)
     shop_name_id: int = Field(foreign_key="shop_name.shop_name_id", primary_key=True)
-    followed_at: datetime 
+    followed_at: date
+
+
+
 
 class LoginData(BaseModel):
     email: str
@@ -156,6 +162,14 @@ class RegisterData(BaseModel):
     email: str
     password: str
 
+class RegisterShopData(BaseModel):
+    shop_name: str
+    shop_address: str
+    email_owner: str
+    phone_owner: str
+
+
+
 class OrderItemId(BaseModel):
     order_item_id: int
 
@@ -182,6 +196,34 @@ class ResetPasswordRequest(BaseModel):
 
 class Token(BaseModel):
     token: str
+
+class Email(BaseModel):
+    email: str
+
+class DeleteProductData(BaseModel):
+    product_id: int
+    image: str
+    category_id:int
+
+
+
+class ProductAdd(BaseModel):
+    shop_name_id:int
+    product_name: str
+    price:int
+    description:str
+    category_id:int
+    image:str
+    description_detail:str
+
+class ProductUpdate(BaseModel):
+    shop_name_id:int
+    product_name: str
+    product_id:int
+    price:int
+    description:str
+    category_id:int
+    description_detail:str
 
 class SMSRequest(BaseModel):
     phone_number: str

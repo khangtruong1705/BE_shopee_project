@@ -1,11 +1,15 @@
 from datetime import datetime
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException,Query
+from fastapi import APIRouter, Depends, HTTPException,Query,UploadFile,File,Form
 from sqlmodel import Session, select,func
-from app.models import Products,Categories
+from app.models import Products,Categories,ProductAdd,DeleteProductData,ProductUpdate
 from app.core.db import get_session
 from dotenv import load_dotenv
 import json
+import time
+import cloudinary
+import cloudinary.uploader
+
 # from confluent_kafka import Producer
 
 load_dotenv()
@@ -38,6 +42,112 @@ def get_all_products( page: int = Query(1, ge=1),limit: int = Query(12, ge=1), s
         "page": page,
         "limit": limit
     }
+
+@router.put("/edit-product-by-productid")
+def update_product(data: ProductUpdate, session: Session = Depends(get_session)):
+    # Tìm product theo product_id
+    statement = select(Products).where(Products.product_id == data.product_id)
+    product = session.exec(statement).first()
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Cập nhật các field
+    product.name = data.product_name
+    product.shop_name_id = data.shop_name_id
+    product.price = data.price
+    product.description = data.description
+    product.category_id = data.category_id
+    product.detailed_description = data.description_detail
+
+    session.add(product)
+    session.commit()
+    session.refresh(product)
+
+    return {"message": "Product updated successfully!"}
+
+
+@router.post("/add-product")
+def add_product(data:ProductAdd ,session: Session = Depends(get_session)):
+        new_product = Products(
+            name=data.product_name,
+            image ='',
+            description = data.description,
+            price = data.price,
+            rating = 0,
+            sold = 0,
+            detailed_description = data.description_detail,
+            category_id = data.category_id,
+            shop_name_id = data.shop_name_id,
+            updated_at = None,
+            views=0
+        )
+        session.add(new_product)
+        session.commit()
+        session.refresh(new_product)
+        return new_product
+
+@router.delete("/delete-product-by-productid")
+def delete_product_by_productid(data:DeleteProductData,session: Session = Depends(get_session)
+):
+    statement = select(Products).where(Products.product_id == data.product_id)
+    product =session.exec(statement).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="product not found")
+    if not data.image:
+        pass
+    if data.image:
+        filename = data.image.rpartition('/')[2].split('.')[0]
+        public_id = f"product_avatar/{data.category_id}/{filename}" 
+        cloudinary.uploader.destroy(public_id, resource_type="image")  
+    session.delete(product)
+    session.commit()  
+    return  {"message": "Product delete successfully !!"}
+
+@router.post("/upload-product-avatar")
+async def upload_product_avatar(product_id: int = Form(...),
+                                category_id: int = Form(...),
+                                 avatar: UploadFile = File(...),
+                                 session: Session = Depends(get_session)
+):
+    statement = select(Products).where(Products.product_id == product_id)
+    product =session.exec(statement).first()
+    contents = await avatar.read()
+    unix_timestamp = int(time.time())
+    if not product.image:
+        # Upload file to Cloudinary
+            result = cloudinary.uploader.upload(
+            contents,
+            folder=f"product_avatar/{category_id}",
+            public_id=f"{product_id}_{unix_timestamp}",  
+            resource_type="image"
+    )          
+    if product.image :
+        filename = product.image.rpartition('/')[2].split('.')[0]
+        public_id = f"product_avatar/{category_id}/{filename}"
+        cloudinary.uploader.destroy(public_id, resource_type="image")
+        result =  cloudinary.uploader.upload(
+            contents,
+            folder=f"product_avatar/{category_id}",
+            public_id=f"{product_id}_{unix_timestamp}", 
+            resource_type="image")
+    product.image = result["secure_url"]
+    session.commit()
+    session.refresh(product)
+    return {
+        "avatar_url": result["secure_url"]
+    }
+
+
+@router.get("/get-products-by-shop-name-id")
+def get_products_by_shop_name_id(shop_name_id:int = Query(...),session: Session = Depends(get_session)) -> Any:
+    statement_product = select(Products).where(Products.shop_name_id ==shop_name_id)
+    products = session.exec(statement_product).all()
+    if not products:
+        raise HTTPException(status_code=404, detail="No products found for this category")
+    return products
+
+
 
 @router.get("/get-products-by-search/{keyword}")
 def get_products_by_search(keyword,session: Session = Depends(get_session)) -> Any:

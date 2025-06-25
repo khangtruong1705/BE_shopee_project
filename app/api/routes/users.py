@@ -31,7 +31,7 @@ cloudinary.config(
 )
 sender_email = os.getenv("SENDER_EMAIL")
 sender_password = os.getenv("SENDER_PASSWORD")
-DOMAIN =os.getenv("DOMAIN") 
+SUPERSET_DOMAIN =os.getenv("SUPERSET_DOMAIN") 
 
 
 @router.post("/register")
@@ -116,7 +116,7 @@ def get_guest_token(shop_id: int = Query(...),dashboard_id: str = Query(...)):
     try:
         access_token = get_superset_access_token()
         print('access_token',access_token)
-        url = f"{DOMAIN}/api/v1/security/guest_token/"
+        url = f"{SUPERSET_DOMAIN}/api/v1/security/guest_token/"
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json"

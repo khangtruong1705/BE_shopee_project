@@ -1,7 +1,5 @@
 import os
 import secrets
-from typing import Literal, Optional
-from urllib.parse import quote_plus
 
 class Settings:
     def __init__(self):
@@ -25,8 +23,8 @@ class Settings:
         self.POSTGRES_SERVER = os.getenv("POSTGRES_SERVER", "localhost")
         self.POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
         self.POSTGRES_USER = os.getenv("POSTGRES_USER", "user")
-        self.POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
-        self.POSTGRES_DB = os.getenv("POSTGRES_DB", "database")
+        self.POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
+        self.POSTGRES_DB = os.getenv("POSTGRES_DB", "postgres")
 
     @property
     def server_host(self) -> str:

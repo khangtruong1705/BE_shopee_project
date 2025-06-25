@@ -82,8 +82,9 @@ def create_reset_password_token(email: str) -> str:
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+SUPERSET_DOMAIN = os.getenv("SUPERSET_DOMAIN") 
 def get_superset_access_token():
-    url = "http://localhost:8088/api/v1/security/login"
+    url = f"{SUPERSET_DOMAIN}/api/v1/security/login"
     payload = {
         "username": "admin",   
         "password": "admin", 

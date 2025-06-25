@@ -43,6 +43,14 @@ def get_all_products( page: int = Query(1, ge=1),limit: int = Query(12, ge=1), s
         "limit": limit
     }
 
+
+@router.get("/get-all-categories")
+def get_all_categories( session: Session = Depends(get_session)) -> Any:
+    statement = select(Categories)
+    categories = session.exec(statement).all() 
+    return categories
+
+
 @router.put("/edit-product-by-productid")
 def update_product(data: ProductUpdate, session: Session = Depends(get_session)):
     # Tìm product theo product_id
@@ -143,11 +151,7 @@ async def upload_product_avatar(product_id: int = Form(...),
 def get_products_by_shop_name_id(shop_name_id:int = Query(...),session: Session = Depends(get_session)) -> Any:
     statement_product = select(Products).where(Products.shop_name_id ==shop_name_id)
     products = session.exec(statement_product).all()
-    if not products:
-        raise HTTPException(status_code=404, detail="No products found for this category")
     return products
-
-
 
 @router.get("/get-products-by-search/{keyword}")
 def get_products_by_search(keyword,session: Session = Depends(get_session)) -> Any:

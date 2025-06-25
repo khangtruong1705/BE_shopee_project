@@ -85,8 +85,8 @@ def create_reset_password_token(email: str) -> str:
 def get_superset_access_token():
     url = "http://localhost:8088/api/v1/security/login"
     payload = {
-        "username": "supersetadmin",   
-        "password": "supersetadmin", 
+        "username": "admin",   
+        "password": "admin", 
         "provider": "db"
     }
     response = requests.post(url, json=payload)

@@ -1,6 +1,6 @@
 from typing import Any
 from app.api.routes.utils import verify_password,hash_password,create_access_token,send_email,create_reset_password_token,decode_token,get_superset_access_token
-from fastapi import APIRouter, Depends, HTTPException,status,UploadFile, File,Form,Depends
+from fastapi import APIRouter, Depends, HTTPException,status,UploadFile, File,Form,Depends,Query
 from sqlmodel import Session, select
 from app.models import Users, LoginData,RegisterData,ChangePasswordData,PayLoad,ForgotPasswordRequest,ResetPasswordRequest,Token,SMSRequest
 import cloudinary
@@ -21,6 +21,8 @@ router = APIRouter()
 now_utc = datetime.now(timezone.utc)
 
 load_dotenv()
+
+
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
@@ -29,7 +31,7 @@ cloudinary.config(
 )
 sender_email = os.getenv("SENDER_EMAIL")
 sender_password = os.getenv("SENDER_PASSWORD")
-
+DOMAIN =os.getenv("DOMAIN") 
 
 
 @router.post("/register")
@@ -110,11 +112,11 @@ async def google_login(token_request: Token,session: Session = Depends(get_sessi
 
 
 @router.get("/get-superset-guest-token")
-def get_guest_token():
+def get_guest_token(shop_id: int = Query(...),dashboard_id: str = Query(...)):
     try:
         access_token = get_superset_access_token()
         print('access_token',access_token)
-        url = "http://localhost:8088/api/v1/security/guest_token/"
+        url = f"{DOMAIN}/api/v1/security/guest_token/"
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json"
@@ -122,24 +124,27 @@ def get_guest_token():
 
         data = {
             "user": {
-                "username": "guest",
+                "username": f"guest_shop_{shop_id}",
                 "first_name": "Guest",
-                "last_name": "User"
+                "last_name": "User",
             },
             "resources": [
                 {
                     "type": "dashboard",
-                    "id": "96575e71-11e4-43aa-b330-13c4ae995510"
+                    "id": dashboard_id
                 }
             ],
-            "rls": []  # Sửa từ rls_rules thành rls
-            # "roles": ["Public"]  # Thêm roles, dùng Public thay vì Admin cho bảo mật
-        }
+            "rls":[
+                    #  {"clause": f"shop_name_id = {shop_id}",
+                    #  "dataset": 1},
+                #    {"clause": f"shop_name_id = {shop_id}",
+                #     "dataset": 2},
+                    ]}
 
         response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()  # Ném lỗi nếu status code không phải 2xx
+        response.raise_for_status()
         response_json = response.json()
-        print(f"Guest token response: {response_json}")  # Log toàn bộ response
+        print(f"Guest token response: {response_json}") 
         token = response_json.get("token")
         if not token or not isinstance(token, str):
             print(f"Invalid token: {response_json}")

@@ -24,7 +24,7 @@ class Products(SQLModel,table=True):
     shop_name_id: Optional[int] = Field(default=None, foreign_key="shop_name.shop_name_id", nullable=True)
     created_at: Optional[date] = Field(default_factory=date.today)
     updated_at: Optional[date] = Field(default_factory=None)
-    views:int
+    views:int = Field(default_factory=0)
 
 class Users(SQLModel, table=True):
     __tablename__ = 'users'
@@ -121,7 +121,38 @@ class UserFollowShop(SQLModel, table=True):
     followed_at: date
 
 
+class SearchEvent(SQLModel, table=True):
+    __tablename__ = "search_event"
 
+    search_id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    user_id: int = Field(foreign_key="users.user_id")
+    keyword: Optional[str]   
+    created_at: Optional[date] = Field(default_factory=date.today, nullable=True)
+
+class ViewProductEvent(SQLModel, table=True):
+    __tablename__ = "view_product_event"
+
+    view_id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    user_id: int = Field(foreign_key="users.user_id")
+    product_id: int = Field(foreign_key="products.product_id")
+    shop_name_id:Optional[int] 
+    name: Optional[str]
+    created_at: Optional[date] = Field(default_factory=date.today, nullable=True)
+
+
+class ViewCategoryEvent(SQLModel, table=True):
+    __tablename__ = "view_category_event"
+
+    view_id: Optional[int] = Field(default=None, primary_key=True, index=True)
+    user_id: int = Field(foreign_key="users.user_id")
+    category_id: int = Field(foreign_key="categories.category_id") 
+    name: Optional[str]
+    created_at: Optional[date] = Field(default_factory=date.today, nullable=True)
+
+
+class Keyword(BaseModel):
+    user_id: int
+    keyword: str
 
 class LoginData(BaseModel):
     email: str
@@ -227,4 +258,16 @@ class ProductUpdate(BaseModel):
 
 class SMSRequest(BaseModel):
     phone_number: str
+
+
+class ViewProduct(BaseModel):
+     user_id:int
+     product_id:int
+     name:str
+
+class ViewCategory(BaseModel):
+     user_id:int
+     category_id:int
+     name:str
+
 

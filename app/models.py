@@ -83,7 +83,7 @@ class ShopName(SQLModel, table=True):
     response_rate:int
     email_owner: Optional[str] = Field(default=None, foreign_key="users.email", nullable=True)
     phone_owner:str
-
+    user_id_owner:int
 class Payments(SQLModel, table=True):
     __tablename__ = "payments"
 

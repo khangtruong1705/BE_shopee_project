@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException,status,UploadFile,File,Form
 from sqlmodel import Session, select,func
-from app.models import ShopName, Products,UserFollowShop,RegisterShopData,Email
+from app.models import ShopName,Users, Products,UserFollowShop,RegisterShopData,Email
 from typing import Any
 from app.core.db import get_session
 import time
@@ -19,6 +19,8 @@ def register_shop(data:RegisterShopData,session: Session = Depends(get_session))
         existing_shop = session.exec(statement).first()
         if existing_shop is not None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered !!!")
+        find_user_id_owner_statement =select(Users).where(Users.email ==data.email_owner)
+        user_id_owner = session.exec(find_user_id_owner_statement).first()
         new_shop = ShopName(
             name=data.shop_name,
             rate=0,
@@ -26,7 +28,8 @@ def register_shop(data:RegisterShopData,session: Session = Depends(get_session))
             image='',
             response_rate=0,
             email_owner=data.email_owner,
-            phone_owner=data.phone_owner
+            phone_owner=data.phone_owner,
+            user_id_owner = user_id_owner.user_id
         )
         session.add(new_shop)
         session.commit()
@@ -42,6 +45,7 @@ def check_existing_shop(data:Email,session: Session = Depends(get_session)):
             return True
         if existing_shop is None:
             return False
+            
 
 @router.get("/get-shop-by-email-owner/{email}")
 def get_user_by_id(email: str, session: Session = Depends(get_session)) -> Any:

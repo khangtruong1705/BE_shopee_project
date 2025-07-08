@@ -35,7 +35,9 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 
-sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+sio = socketio.AsyncServer(async_mode="asgi",
+                           cors_allowed_origins=settings.BACKEND_CORS_ORIGINS
+                           )
 app_sio = socketio.ASGIApp(sio, app)
 
 

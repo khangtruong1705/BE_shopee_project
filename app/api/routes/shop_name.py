@@ -88,11 +88,6 @@ async def upload_shop_avatar(shop_name_id: int = Form(...), avatar: UploadFile =
     }
 
 
-
-
-
-
-
 @router.get("/get-shop-name-by-productid/{product_id}")
 def get_shop_name_by_product_id(product_id,session: Session = Depends(get_session)) -> Any:
     statement = (

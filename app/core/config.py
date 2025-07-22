@@ -15,7 +15,8 @@ class Settings:
         self.BACKEND_CORS_ORIGINS = [
             "http://localhost:3000",
             "https://fe-shopee-project.onrender.com",
-            "http://localhost:8000"
+            "http://localhost:8000",
+            "https://test-fososoft-project.onrender.com"
         ]
 
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "My Project")

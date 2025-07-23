@@ -28,6 +28,12 @@ current_date = datetime.now().strftime('%Y-%m-%d')
 router = APIRouter()
 
 
+@router.get("/ping", methods=["GET","HEAD"])
+def ping():
+    print('Ping!!!!!')
+    return {"status": "ok"}
+
+
 
 
 @router.get("/get-all-products")

@@ -28,7 +28,7 @@ current_date = datetime.now().strftime('%Y-%m-%d')
 router = APIRouter()
 
 
-@router.get("/ping", methods=["GET","HEAD"])
+@router.api_route("/ping", methods=["GET","HEAD"])
 def ping():
     print('Ping!!!!!')
     return {"status": "ok"}

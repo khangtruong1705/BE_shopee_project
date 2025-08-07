@@ -16,7 +16,8 @@ class Settings:
             "http://localhost:3000",
             "http://localhost:8000",
             "https://fe-shopee-project.onrender.com",
-            "https://test-fososoft-project.onrender.com"
+            "https://test-fososoft-project.onrender.com",
+            "https://e-commerce-shop.onrender.com",
         ]
 
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "My Project")

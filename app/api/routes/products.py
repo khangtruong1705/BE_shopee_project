@@ -112,7 +112,7 @@ def delete_product_by_productid(data:DeleteProductData,session: Session = Depend
         pass
     if data.image:
         filename = data.image.rpartition('/')[2].split('.')[0]
-        public_id = f"product_avatar/{data.category_id}/{filename}" 
+        public_id = f"product_main_avatar/{data.product_id}/{filename}" 
         cloudinary.uploader.destroy(public_id, resource_type="image")  
     session.delete(product)
     session.commit()  
@@ -132,17 +132,17 @@ async def upload_product_avatar(product_id: int = Form(...),
         # Upload file to Cloudinary
             result = cloudinary.uploader.upload(
             contents,
-            folder=f"product_avatar/{category_id}",
+            folder=f"product_main_avatar/{product_id}",
             public_id=f"{product_id}_{unix_timestamp}",  
             resource_type="image"
     )          
     if product.image :
         filename = product.image.rpartition('/')[2].split('.')[0]
-        public_id = f"product_avatar/{category_id}/{filename}"
+        public_id = f"product_main_avatar/product_id_{product_id}/{filename}"
         cloudinary.uploader.destroy(public_id, resource_type="image")
         result =  cloudinary.uploader.upload(
             contents,
-            folder=f"product_avatar/{category_id}",
+            folder=f"product_main_avatar/{product_id}",
             public_id=f"{product_id}_{unix_timestamp}", 
             resource_type="image")
     product.image = result["secure_url"]

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 
 
-
+#-----------------------------------------------------back-end-DB-table---------------------------------------------
 class Products(SQLModel,table=True):
     __tablename__ = 'products'
 
@@ -150,6 +150,62 @@ class ViewCategoryEvent(SQLModel, table=True):
     created_at: Optional[date] = Field(default_factory=date.today, nullable=True)
 
 
+#--------------------------------------ware-house-db-table-------------------------------------
+class OrderItemsTable(SQLModel, table=True):
+    __tablename__ = "order_items_table"
+
+    id: int = Field(primary_key=True)
+    order_item_id: Optional[int] = Field(default=None)
+    user_id: int = Optional[int]
+    items_list: List[Dict] = Field(default_factory=list, sa_column=Column(JSONB, nullable=False))
+    status: Optional[str]
+    
+class PaymentTable(SQLModel, table=True):
+    __tablename__ = "payment_table"
+
+    id: int = Field(primary_key=True)
+    payment_id: Optional[int] 
+    payment_method: Optional[str] 
+    payment_date: Optional[datetime]
+    total_amount: Optional[Decimal]
+    order_item_id:Optional[int]
+
+class SearchMessage(SQLModel, table=True):
+    __tablename__ = "search_mesage"
+
+    id: int = Field(primary_key=True)
+    search_id: Optional[int] 
+    user_id: Optional[int] 
+    keyword: Optional[str]
+    created_at: Optional[date]
+   
+class ShippingTable(SQLModel, table=True):
+    __tablename__ = "shipping_table"
+
+    id: int = Field(primary_key=True)
+    phone: Optional[int] 
+    province: Optional[str]
+
+class ViewCategoryMessage(SQLModel, table=True):
+    __tablename__ = "view_category_message"
+    
+    id: int = Field(primary_key=True)
+    phone: Optional[int] 
+    province: Optional[str]
+
+class ViewProductMessage(SQLModel, table=True):
+    __tablename__ = "view_product_message"
+    
+    id: int = Field(primary_key=True)
+    view_id: Optional[int] 
+    user_id: Optional[int]
+    product_id:Optional[int]     
+    created_at: Optional[date]
+    name:Optional[int]
+    shop_name_id:Optional[int]
+
+
+#--------------------------------------model------------------------------------------- 
 class Keyword(BaseModel):
     user_id: int
     keyword: str

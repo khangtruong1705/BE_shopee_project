@@ -28,6 +28,7 @@ class Settings:
         self.POSTGRES_USER = os.getenv("POSTGRES_USER", "user")
         self.POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
         self.POSTGRES_DB = os.getenv("POSTGRES_DB", "postgres")
+        self.POSTGRES_WAREHOUSE_DB = os.getenv("POSTGRES_WAREHOUSE_DB", "postgres")
 
     @property
     def server_host(self) -> str:
@@ -41,6 +42,12 @@ class Settings:
         user = quote_plus(self.POSTGRES_USER)
         pwd = quote_plus(self.POSTGRES_PASSWORD)
         return f"postgresql+psycopg://{user}:{pwd}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+    @property
+    def SQLALCHEMY_WAREHOUSE_DATABASE_URI(self) -> str:
+        from urllib.parse import quote_plus
+        user = quote_plus(self.POSTGRES_USER)
+        pwd = quote_plus(self.POSTGRES_PASSWORD)
+        return f"postgresql+psycopg://{user}:{pwd}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_WAREHOUSE_DB}"  
 
 settings = Settings()
 

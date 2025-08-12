@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import products,users,comments,shop_name,order_items,carts,payments,user_follow_shop,search_event,view_product_event,view_category_event
+from app.api.routes import products,users,comments,shop_name,order_items,carts,payments,user_follow_shop,search_event,view_product_event,view_category_event,chart
 
 api_router = APIRouter()
 api_router.include_router(users.router, prefix="/users", tags=["users"])
@@ -14,3 +14,4 @@ api_router.include_router(user_follow_shop.router, prefix="/user-follow-shop", t
 api_router.include_router(search_event.router, prefix="/search", tags=["search"])
 api_router.include_router(view_product_event.router, prefix="/view-product", tags=["view_product"])
 api_router.include_router(view_category_event.router, prefix="/view-category", tags=["view_category"])
+api_router.include_router(chart.router, prefix="/chart", tags=["chart"])

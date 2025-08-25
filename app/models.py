@@ -327,3 +327,10 @@ class ViewCategory(BaseModel):
      name:str
 
 
+class UpdateProfile(BaseModel):
+     email:str
+     name:str
+     password:str
+     phone:int
+     address:str
+

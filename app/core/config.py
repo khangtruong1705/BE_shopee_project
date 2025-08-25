@@ -12,13 +12,7 @@ class Settings:
         self.DOMAIN = os.getenv("DOMAIN","http://localhost:8000")
         self.ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
 
-        self.BACKEND_CORS_ORIGINS = [
-            "http://localhost:3000",
-            "http://localhost:8000",
-            "https://fe-shopee-project.onrender.com",
-            "https://test-fososoft-project.onrender.com",
-            "https://e-commerce-shop-6pq3.onrender.com",
-        ]
+        self.BACKEND_CORS_ORIGINS = ["*"]
 
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "My Project")
         self.SENTRY_DSN = os.getenv("SENTRY_DSN")

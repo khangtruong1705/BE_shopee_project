@@ -2,7 +2,7 @@ from typing import Any
 from app.api.routes.utils import verify_password,hash_password,create_access_token,send_email,create_reset_password_token,decode_token,get_superset_access_token
 from fastapi import APIRouter, Depends, HTTPException,status,UploadFile, File,Form,Depends,Query
 from sqlmodel import Session, select
-from app.models import Users, LoginData,RegisterData,ChangePasswordData,PayLoad,ForgotPasswordRequest,ResetPasswordRequest,Token,SMSRequest
+from app.models import Users,UpdateProfile, LoginData,RegisterData,ChangePasswordData,PayLoad,ForgotPasswordRequest,ResetPasswordRequest,Token,SMSRequest
 import cloudinary
 import cloudinary.uploader
 from dotenv import load_dotenv
@@ -52,6 +52,30 @@ def register_user(register_data: RegisterData):
         session.commit()
         return {"detail": "User registered successfully !!!"}
 
+@router.put("/update")
+def update_user( update_data: UpdateProfile):
+    with Session(engine) as session:
+        statement = select(Users).where(Users.email == update_data.email)
+        user = session.exec(statement).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found !!!"
+            )
+        if update_data.name:
+            user.name = update_data.name
+        if update_data.password:
+            user.password = hash_password(update_data.password)
+        if update_data.password:
+            user.phone_number = update_data.phone
+        if update_data.address:
+            user.address = update_data.address
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        return {"detail": "User updated successfully !!!", "user": user}
+
+
 @router.post("/login")
 def login_user(login_data: LoginData,session: Session = Depends(get_session)):
         statement = select(Users).where(Users.email == login_data.email)
@@ -83,9 +107,9 @@ async def google_login(token_request: Token,session: Session = Depends(get_sessi
         user = session.exec(statement).first()
         if not user:
             user = Users(
-                name=idinfo.get("name"),
+                name=None,
                 email=idinfo.get("email"),
-                password="",
+                password=None,
                 address=None,
                 phone_number=None,
                 role="user"
